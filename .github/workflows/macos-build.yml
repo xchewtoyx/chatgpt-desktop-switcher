@@ -11,22 +11,27 @@ permissions:
 
 jobs:
   build:
-    name: Build Apple Silicon app
+    name: Build universal macOS app
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
       - name: Run tests
         run: cargo test --locked
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.8.4 --locked
       - name: Build application bundle
-        run: cargo tauri build --bundles app -- --locked
+        run: cargo tauri build --target universal-apple-darwin --bundles app -- --locked
       - name: Package application
         run: |
-          APP="target/release/bundle/macos/ChatGPT Desktop Switcher.app"
+          APP="target/universal-apple-darwin/release/bundle/macos/ChatGPT Desktop Switcher.app"
           test -d "$APP"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP/Contents/Info.plist")
+          lipo -verify_arch arm64 x86_64 "$APP/Contents/MacOS/$EXECUTABLE"
+          lipo -info "$APP/Contents/MacOS/$EXECUTABLE"
           mkdir dmg-staging
           ditto "$APP" "dmg-staging/ChatGPT Desktop Switcher.app"
           ln -s /Applications dmg-staging/Applications
