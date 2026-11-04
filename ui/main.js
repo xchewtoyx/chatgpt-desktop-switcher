@@ -1,3 +1,62 @@
+// Use a supported system language; keep Japanese as the fallback. An explicit
+// selection overrides the system language and is saved for future launches.
+const translations = {
+  "ログイン状態をプロファイルごとに分けて、ChatGPTを同時に起動します。": "Run ChatGPT profiles at the same time, each with its own sign-in.",
+  "プロファイルを追加": "Add a profile",
+  "初回起動後、そのウインドウで利用するアカウントにログインしてください。": "After the first launch, sign in to the account you want to use in that window.",
+  "プロファイル名": "Profile name",
+  "例：work": "e.g. work",
+  "追加": "Add",
+  "プロファイル": "Profiles",
+  "更新": "Refresh",
+  "操作を完了できませんでした": "The operation could not be completed.",
+  "既存のChatGPT環境": "Existing ChatGPT environment",
+  "分離プロファイル": "Isolated profile",
+  "起動中": "Running",
+  "停止中": "Stopped",
+  "前面に表示": "Show window",
+  "起動": "Launch",
+  "終了": "Stop",
+  "読み込み中...": "Loading...",
+  "プロファイルを読み込めませんでした。": "Could not load profiles.",
+  "プロファイルを追加しました": "Profile added.",
+  "ホームディレクトリを取得できませんでした": "Could not find the home directory.",
+  "プロファイル名を入力してください": "Enter a profile name.",
+  "default は既存環境用の予約名です": "The name default is reserved for the existing environment.",
+  "プロファイル名は40文字以内にしてください": "Profile names must be 40 characters or fewer.",
+  "プロファイル名に使用できない文字が含まれています": "The profile name contains invalid characters.",
+  "同じ名前のプロファイルがすでにあります": "A profile with this name already exists.",
+  "/Applications/ChatGPT.app が見つかりません": "Could not find /Applications/ChatGPT.app.",
+  "プロファイルが見つかりません": "Profile not found.",
+  "ChatGPT.appを起動できませんでした": "Could not launch ChatGPT.app.",
+  "ChatGPT.appを終了できませんでした": "Could not stop ChatGPT.app.",
+  "実行中のChatGPT.appが見つかりません": "Could not find the running ChatGPT.app.",
+  "実行中のChatGPT.appを確認できませんでした": "Could not check running ChatGPT.app instances."
+};
+const systemLanguages = navigator.languages?.length ? navigator.languages : [navigator.language];
+const systemLanguage = systemLanguages
+  .filter((value) => typeof value === "string")
+  .map((value) => value.toLowerCase().split(/[-_]/)[0])
+  .find((value) => value === "ja" || value === "en");
+let language = systemLanguage || "ja";
+try {
+  const savedLanguage = localStorage.getItem("language");
+  if (savedLanguage === "ja" || savedLanguage === "en") language = savedLanguage;
+} catch (_) {
+  // The selector still works for this session if storage is unavailable.
+}
+const t = (text) => language === "ja" ? text : (translations[text] || text);
+function applyLanguage() {
+  document.documentElement.lang = language;
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+}
+applyLanguage();
+
 const { invoke } = window.__TAURI__.core;
 
 const list = document.querySelector("#profile-list");
@@ -21,7 +80,7 @@ function showMessage(text, isError = false) {
 }
 
 function errorText(error) {
-  return typeof error === "string" ? error : "操作を完了できませんでした";
+  return typeof error === "string" ? t(error) : t("操作を完了できませんでした");
 }
 
 function createButton(label, className, action) {
@@ -56,22 +115,22 @@ function renderProfiles(profiles, { animate = true } = {}) {
     name.textContent = profile.name;
     const kind = document.createElement("p");
     kind.className = "profile-kind";
-    kind.textContent = profile.isDefault ? "既存のChatGPT環境" : "分離プロファイル";
+    kind.textContent = profile.isDefault ? t("既存のChatGPT環境") : t("分離プロファイル");
     identity.append(name, kind);
 
     const status = document.createElement("span");
     status.className = `status${profile.running ? " running" : ""}`;
-    status.textContent = profile.running ? "起動中" : "停止中";
+    status.textContent = profile.running ? t("起動中") : t("停止中");
 
     const actions = document.createElement("div");
     actions.className = "actions";
-    const launchLabel = profile.running ? "前面に表示" : "起動";
+    const launchLabel = profile.running ? t("前面に表示") : t("起動");
     actions.append(
       createButton(launchLabel, "action", () => runProfileAction("launch_profile", profile.name)),
     );
     if (profile.running) {
       actions.append(
-        createButton("終了", "action stop", () => runProfileAction("stop_profile", profile.name)),
+        createButton(t("終了"), "action stop", () => runProfileAction("stop_profile", profile.name)),
       );
     }
     row.append(identity, status, actions);
@@ -82,7 +141,7 @@ function renderProfiles(profiles, { animate = true } = {}) {
 async function loadProfiles({ quiet = false } = {}) {
   if (busy) return;
   if (!quiet && renderedProfilesSignature === null) {
-    list.innerHTML = '<p class="loading">読み込み中...</p>';
+    list.innerHTML = `<p class="loading">${t("読み込み中...")}</p>`;
   }
   try {
     const profiles = await invoke("list_profiles");
@@ -92,7 +151,7 @@ async function loadProfiles({ quiet = false } = {}) {
     }
   } catch (error) {
     renderedProfilesSignature = null;
-    list.innerHTML = '<p class="empty">プロファイルを読み込めませんでした。</p>';
+    list.innerHTML = `<p class="empty">${t("プロファイルを読み込めませんでした。")}</p>`;
     showMessage(errorText(error), true);
   }
 }
@@ -126,7 +185,7 @@ form.addEventListener("submit", async (event) => {
     const profiles = await invoke("create_profile", { name: input.value });
     input.value = "";
     renderProfiles(profiles);
-    showMessage("プロファイルを追加しました");
+    showMessage(t("プロファイルを追加しました"));
   } catch (error) {
     showMessage(errorText(error), true);
   } finally {
@@ -134,6 +193,21 @@ form.addEventListener("submit", async (event) => {
     submit.disabled = false;
     input.focus();
   }
+});
+
+const languageSelect = document.querySelector("#language-select");
+languageSelect.value = language;
+languageSelect.addEventListener("change", () => {
+  language = languageSelect.value === "en" ? "en" : "ja";
+  try {
+    localStorage.setItem("language", language);
+  } catch (_) {
+    // Keep using the selected language until the app closes.
+  }
+  applyLanguage();
+  message.hidden = true;
+  renderedProfilesSignature = null;
+  loadProfiles();
 });
 
 refreshButton.addEventListener("click", () => loadProfiles());

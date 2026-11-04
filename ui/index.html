@@ -14,35 +14,41 @@
           <p class="eyebrow">LOCAL PROFILE LAUNCHER</p>
           <h1>ChatGPT Desktop<br />Switcher</h1>
         </div>
-        <p class="summary">
+        <p class="summary" data-i18n="ログイン状態をプロファイルごとに分けて、ChatGPTを同時に起動します。">
           ログイン状態をプロファイルごとに分けて、ChatGPTを同時に起動します。
         </p>
       </header>
 
+      <label for="language-select">言語 / Language</label>
+      <select id="language-select">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
+
       <section class="create-area" aria-labelledby="create-title">
         <div>
-          <h2 id="create-title">プロファイルを追加</h2>
-          <p>初回起動後、そのウインドウで利用するアカウントにログインしてください。</p>
+          <h2 id="create-title" data-i18n="プロファイルを追加">プロファイルを追加</h2>
+          <p data-i18n="初回起動後、そのウインドウで利用するアカウントにログインしてください。">初回起動後、そのウインドウで利用するアカウントにログインしてください。</p>
         </div>
         <form id="create-form">
-          <label class="sr-only" for="profile-name">プロファイル名</label>
+          <label class="sr-only" for="profile-name" data-i18n="プロファイル名">プロファイル名</label>
           <input
             id="profile-name"
             name="profile-name"
             type="text"
             maxlength="40"
             autocomplete="off"
-            placeholder="例：work"
+            placeholder="例：work" data-i18n-placeholder="例：work"
             required
           />
-          <button class="primary" type="submit">追加</button>
+          <button class="primary" type="submit" data-i18n="追加">追加</button>
         </form>
       </section>
 
       <section class="profiles-area" aria-labelledby="profiles-title">
         <div class="section-heading">
-          <h2 id="profiles-title">プロファイル</h2>
-          <button id="refresh-button" class="quiet" type="button">更新</button>
+          <h2 id="profiles-title" data-i18n="プロファイル">プロファイル</h2>
+          <button id="refresh-button" class="quiet" type="button" data-i18n="更新">更新</button>
         </div>
         <div id="profile-list" class="profile-list" aria-live="polite"></div>
       </section>
