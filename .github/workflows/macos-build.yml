@@ -1,0 +1,37 @@
+name: Build macOS app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Apple Silicon app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Run tests
+        run: cargo test --locked
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version 2.8.4 --locked
+      - name: Build application bundle
+        run: cargo tauri build --locked --bundles app
+      - name: Package application
+        run: |
+          APP="target/release/bundle/macos/ChatGPT Desktop Switcher.app"
+          test -d "$APP"
+          ditto -c -k --sequesterRsrc --keepParent "$APP" ChatGPT-Desktop-Switcher-macOS.zip
+      - name: Upload application
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPT-Desktop-Switcher-macOS
+          path: ChatGPT-Desktop-Switcher-macOS.zip
+          if-no-files-found: error
+          retention-days: 30
