@@ -22,7 +22,7 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.8.4 --locked
       - name: Build application bundle
-        run: cargo tauri build --locked --bundles app
+        run: cargo tauri build --bundles app -- --locked
       - name: Package application
         run: |
           APP="target/release/bundle/macos/ChatGPT Desktop Switcher.app"
