@@ -32,7 +32,7 @@ jobs:
           APP="target/universal-apple-darwin/release/bundle/macos/ChatGPT Desktop Switcher.app"
           test -d "$APP"
           EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP/Contents/Info.plist")
-          lipo -verify_arch arm64 x86_64 "$APP/Contents/MacOS/$EXECUTABLE"
+          lipo "$APP/Contents/MacOS/$EXECUTABLE" -verify_arch arm64 x86_64
           lipo -info "$APP/Contents/MacOS/$EXECUTABLE"
           mkdir dmg-staging
           ditto "$APP" "dmg-staging/ChatGPT Desktop Switcher.app"
