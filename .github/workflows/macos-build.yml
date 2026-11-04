@@ -1,0 +1,47 @@
+name: Build macOS app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build universal macOS app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+      - name: Run tests
+        run: cargo test --locked
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build application bundle
+        run: npx --yes @tauri-apps/cli@2.8.4 build --target universal-apple-darwin --bundles app -- --locked
+      - name: Package application
+        run: |
+          APP="target/universal-apple-darwin/release/bundle/macos/ChatGPT Desktop Switcher.app"
+          test -d "$APP"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c "Print CFBundleExecutable" "$APP/Contents/Info.plist")
+          lipo "$APP/Contents/MacOS/$EXECUTABLE" -verify_arch arm64 x86_64
+          lipo -info "$APP/Contents/MacOS/$EXECUTABLE"
+          mkdir dmg-staging
+          ditto "$APP" "dmg-staging/ChatGPT Desktop Switcher.app"
+          ln -s /Applications dmg-staging/Applications
+          hdiutil create -volname "ChatGPT Desktop Switcher" -srcfolder dmg-staging -format UDZO ChatGPT-Desktop-Switcher-macOS.dmg
+      - name: Upload application
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPT-Desktop-Switcher-macOS
+          path: ChatGPT-Desktop-Switcher-macOS.dmg
+          if-no-files-found: error
+          retention-days: 30
