@@ -1,5 +1,4 @@
-// Japanese remains the fallback shown before the script loads. Select English for
-// non-Japanese system languages; other translations can be added here.
+// Japanese is the default; users can choose English and keep that choice.
 const translations = {
   "ログイン状態をプロファイルごとに分けて、ChatGPTを同時に起動します。": "Run ChatGPT profiles at the same time, each with its own sign-in.",
   "プロファイルを追加": "Add a profile",
@@ -33,15 +32,23 @@ const translations = {
   "実行中のChatGPT.appが見つかりません": "Could not find the running ChatGPT.app.",
   "実行中のChatGPT.appを確認できませんでした": "Could not check running ChatGPT.app instances."
 };
-const isJapanese = (navigator.language || "").toLowerCase().startsWith("ja");
-const t = (text) => isJapanese ? text : (translations[text] || text);
-document.documentElement.lang = isJapanese ? "ja" : "en";
-document.querySelectorAll("[data-i18n]").forEach((element) => {
-  element.textContent = t(element.dataset.i18n);
-});
-document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
-  element.placeholder = t(element.dataset.i18nPlaceholder);
-});
+let language = "ja";
+try {
+  if (localStorage.getItem("language") === "en") language = "en";
+} catch (_) {
+  // The selector still works for this session if storage is unavailable.
+}
+const t = (text) => language === "ja" ? text : (translations[text] || text);
+function applyLanguage() {
+  document.documentElement.lang = language;
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((element) => {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  });
+}
+applyLanguage();
 
 const { invoke } = window.__TAURI__.core;
 
@@ -179,6 +186,21 @@ form.addEventListener("submit", async (event) => {
     submit.disabled = false;
     input.focus();
   }
+});
+
+const languageSelect = document.querySelector("#language-select");
+languageSelect.value = language;
+languageSelect.addEventListener("change", () => {
+  language = languageSelect.value === "en" ? "en" : "ja";
+  try {
+    localStorage.setItem("language", language);
+  } catch (_) {
+    // Keep using the selected language until the app closes.
+  }
+  applyLanguage();
+  message.hidden = true;
+  renderedProfilesSignature = null;
+  loadProfiles();
 });
 
 refreshButton.addEventListener("click", () => loadProfiles());
