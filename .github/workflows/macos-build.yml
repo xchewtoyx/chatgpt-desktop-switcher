@@ -27,11 +27,14 @@ jobs:
         run: |
           APP="target/release/bundle/macos/ChatGPT Desktop Switcher.app"
           test -d "$APP"
-          ditto -c -k --sequesterRsrc --keepParent "$APP" ChatGPT-Desktop-Switcher-macOS.zip
+          mkdir dmg-staging
+          ditto "$APP" "dmg-staging/ChatGPT Desktop Switcher.app"
+          ln -s /Applications dmg-staging/Applications
+          hdiutil create -volname "ChatGPT Desktop Switcher" -srcfolder dmg-staging -format UDZO ChatGPT-Desktop-Switcher-macOS.dmg
       - name: Upload application
         uses: actions/upload-artifact@v4
         with:
           name: ChatGPT-Desktop-Switcher-macOS
-          path: ChatGPT-Desktop-Switcher-macOS.zip
+          path: ChatGPT-Desktop-Switcher-macOS.dmg
           if-no-files-found: error
           retention-days: 30
