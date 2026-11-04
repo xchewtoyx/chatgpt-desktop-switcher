@@ -21,10 +21,12 @@ jobs:
           targets: aarch64-apple-darwin, x86_64-apple-darwin
       - name: Run tests
         run: cargo test --locked
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version 2.8.4 --locked
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Build application bundle
-        run: cargo tauri build --target universal-apple-darwin --bundles app -- --locked
+        run: npx --yes @tauri-apps/cli@2.8.4 build --target universal-apple-darwin --bundles app -- --locked
       - name: Package application
         run: |
           APP="target/universal-apple-darwin/release/bundle/macos/ChatGPT Desktop Switcher.app"
