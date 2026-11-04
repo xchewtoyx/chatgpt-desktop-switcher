@@ -1,4 +1,5 @@
-// Japanese is the default; users can choose English and keep that choice.
+// Use a supported system language; keep Japanese as the fallback. An explicit
+// selection overrides the system language and is saved for future launches.
 const translations = {
   "ログイン状態をプロファイルごとに分けて、ChatGPTを同時に起動します。": "Run ChatGPT profiles at the same time, each with its own sign-in.",
   "プロファイルを追加": "Add a profile",
@@ -32,9 +33,15 @@ const translations = {
   "実行中のChatGPT.appが見つかりません": "Could not find the running ChatGPT.app.",
   "実行中のChatGPT.appを確認できませんでした": "Could not check running ChatGPT.app instances."
 };
-let language = "ja";
+const systemLanguages = navigator.languages?.length ? navigator.languages : [navigator.language];
+const systemLanguage = systemLanguages
+  .filter((value) => typeof value === "string")
+  .map((value) => value.toLowerCase().split(/[-_]/)[0])
+  .find((value) => value === "ja" || value === "en");
+let language = systemLanguage || "ja";
 try {
-  if (localStorage.getItem("language") === "en") language = "en";
+  const savedLanguage = localStorage.getItem("language");
+  if (savedLanguage === "ja" || savedLanguage === "en") language = savedLanguage;
 } catch (_) {
   // The selector still works for this session if storage is unavailable.
 }
